@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Bot para Discord",
   "main": "index.js",
+  "engines": {
+    "node": ">=12"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -10,7 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "discord.js": "^12.5.3",
-    "dotenv": "^10.0.0"
+    "dotenv": "^10.0.0",
+    "lodash": "^4.17.21",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "eslint": "^7.25.0",
