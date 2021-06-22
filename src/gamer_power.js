@@ -1,8 +1,12 @@
 const _ = require("lodash");
+const fs = require("fs")
 const fetch = require("node-fetch");
 const { MessageEmbed } = require("discord.js");
 
+let data = require('../data.json');
+
 async function sendGameToChannel(client, channel_name, game) {
+  console.log(`Publishinng free game: ${game.title}`);
   const channel = await client.channels.fetch(channel_name);
 
   const gameEmbed = new MessageEmbed()
@@ -20,6 +24,7 @@ async function sendGameToChannel(client, channel_name, game) {
 }
 
 async function checkNewPublishedGames(client, channel, last_time_check) {
+  console.log(`Checking new published games at ${new Date(last_time_check)}`);
   api_endpoint = "https://www.gamerpower.com/api/giveaways";
 
   const response = await fetch(api_endpoint).then((res) => res.json());
@@ -44,13 +49,23 @@ async function checkNewPublishedGames(client, channel, last_time_check) {
 module.exports = function initGamerPower(client, channel) {
   //the first last_time_check should come from some memory storage instead of
   //being created in the runtime in case bot is restarted
-  let last_time_check = new Date().getTime();
+  let last_time_check = initLastTimeCheck();
   const five_minutes = 5 * 60 * 1000;
 
   checkNewPublishedGames(client, channel, last_time_check);
-  last_time_check = new Date().getTime();
+  last_time_check = lastTimeCheck();
   setInterval(() => {
     checkNewPublishedGames(client, channel, last_time_check);
-    last_time_check = new Date().getTime();
+    last_time_check = lastTimeCheck();
   }, five_minutes);
 };
+
+function initLastTimeCheck() {
+  return (data.game_power && data.game_power.last_time_check) || new Date().getTime();
+}
+
+function lastTimeCheck() {
+  last_time_check = new Date().getTime();
+  fs.writeFileSync('data.json', JSON.stringify({game_power: {last_time_check}}));
+  return last_time_check
+}
