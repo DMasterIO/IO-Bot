@@ -2,7 +2,7 @@
   "name": "iobot",
   "version": "1.0.0",
   "description": "Bot para Discord",
-  "main": "index.js",
+  "main": "src/index.js",
   "engines": {
     "node": ">=12"
   },
