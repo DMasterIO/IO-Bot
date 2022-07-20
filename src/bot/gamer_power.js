@@ -3,7 +3,7 @@ const fs = require("fs")
 const fetch = require("node-fetch");
 const { MessageEmbed } = require("discord.js");
 
-let data = require('../data.json');
+let data = require('../../data.json');
 
 async function sendGameToChannel(client, channel_name, game) {
   console.log(`Publishinng free game: ${game.title}`);
@@ -67,5 +67,5 @@ function initLastTimeCheck() {
 function lastTimeCheck() {
   last_time_check = new Date().getTime();
   fs.writeFileSync('data.json', JSON.stringify({game_power: {last_time_check}}));
-  return last_time_check
+  return last_time_check;
 }

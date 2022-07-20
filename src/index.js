@@ -2,7 +2,7 @@ require("dotenv").config();
 const Discord = require("discord.js");
 const client = new Discord.Client();
 
-const initGamerPower = require("./gamer_power");
+const initGamerPower = require("./bot/gamer_power");
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
