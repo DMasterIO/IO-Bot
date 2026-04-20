@@ -38,7 +38,11 @@ export class Application {
 
     const twitchBot = new TwitchBot({
       clientId: this.config.twitch.clientId,
+      clientSecret: this.config.twitch.clientSecret,
       accessToken: this.config.twitch.accessToken,
+      refreshToken: this.config.twitch.refreshToken,
+      tokenExpiresIn: this.config.twitch.tokenExpiresIn,
+      tokenFile: this.config.twitch.tokenFile,
       channels: this.config.twitch.channels,
       commandPrefix: this.config.twitch.commandPrefix,
       commandRegistry,
