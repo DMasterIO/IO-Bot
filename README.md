@@ -1,0 +1,149 @@
+# IO-Bot V2
+
+Backend Node.js modular para automatizaciones en vivo con integraciones a Twitch, Discord y Philips Hue.
+
+## Requisitos
+
+- Node.js 25.9.0 (o superior)
+- npm 10+
+- Bridge de Philips Hue en la misma red local
+- Cuenta de Twitch para el bot
+
+## Inicio rapido
+
+```bash
+npm install
+cp .env.example .env
+# Edita .env con tus credenciales (ver seccion Configuracion)
+npm run dev
+```
+
+## Configuracion
+
+### Twitch
+
+| Variable | Descripcion |
+|---|---|
+| `TWITCH_CLIENT_ID` | Client ID de tu app en [dev.twitch.tv/console](https://dev.twitch.tv/console) → Register Your Application |
+| `TWITCH_ACCESS_TOKEN` | Token OAuth del bot con scopes `chat:read` y `chat:edit`. Generalo con la [Twitch CLI](https://github.com/twitchdev/twitch-cli): `twitch token -u -s "chat:read chat:edit"` |
+| `TWITCH_CHANNELS` | Nombre(s) de tu canal sin `#`, separados por coma. Ej: `micanal` |
+| `TWITCH_COMMAND_PREFIX` | Prefijo de comandos, por defecto `!` |
+
+> Para generar el token: instala la [Twitch CLI](https://github.com/twitchdev/twitch-cli), ejecuta `twitch configure -i CLIENT_ID -s CLIENT_SECRET` y luego `twitch token -u -s "chat:read chat:edit"`.
+
+### Philips Hue
+
+| Variable | Descripcion |
+|---|---|
+| `HUE_BRIDGE_IP` | IP local del bridge. Busca en la app Hue → Settings → My Hue System → Bridge → IPv4, o visita `https://discovery.meethue.com/` |
+| `HUE_APP_KEY` | Clave de aplicacion generada en el bridge (ver pasos abajo) |
+| `HUE_LIGHT_IDS` | IDs de luces individuales a controlar separados por coma. Si se deja vacio y no hay grupos configurados, controla todas |
+| `HUE_GROUPED_LIGHT_IDS` | IDs de `grouped_light` a controlar separados por coma. Ideal si quieres usar un grupo o zona ya armada en Hue |
+| `HUE_DEFAULT_BRIGHTNESS` | Brillo de 1 a 100. Recomendado: `80` |
+| `HUE_ALLOW_SELF_SIGNED` | `true` para aceptar el certificado self-signed del bridge local |
+
+**Como obtener `HUE_APP_KEY`:**
+
+1. Presiona el boton fisico del bridge Hue.
+2. Dentro de los siguientes 30 segundos, ejecuta (reemplaza la IP):
+
+```bash
+curl -X POST https://192.168.1.10/api \
+  -k \
+  -H "Content-Type: application/json" \
+  -d '{"devicetype":"io-bot#v2","generateclientkey":true}'
+```
+
+3. La respuesta incluye el campo `username`, ese valor es tu `HUE_APP_KEY`.
+
+**Como obtener `HUE_LIGHT_IDS` (opcional):**
+
+```bash
+curl -k https://192.168.1.10/clip/v2/resource/light \
+  -H "hue-application-key: TU_APP_KEY"
+```
+
+Cada elemento del array tiene un campo `id` (UUID). Copia los que quieras controlar.
+
+**Como obtener `HUE_GROUPED_LIGHT_IDS` (opcional, recomendado si ya armaste grupos/zonas):**
+
+```bash
+curl -k https://192.168.1.10/clip/v2/resource/grouped_light \
+  -H "hue-application-key: TU_APP_KEY"
+```
+
+Ese endpoint devuelve recursos `grouped_light`. Copia sus `id` en `HUE_GROUPED_LIGHT_IDS`.
+
+### Que conviene usar
+
+- Usa `HUE_LIGHT_IDS` si quieres controlar luces puntuales.
+- Usa `HUE_GROUPED_LIGHT_IDS` si quieres controlar un grupo/zona ya armado en Hue.
+- Si ambas variables estan vacias, el bot controla todas las luces detectadas.
+
+### Discord (opcional)
+
+| Variable | Descripcion |
+|---|---|
+| `DISCORD_TOKEN` | Token del bot en [discord.com/developers/applications](https://discord.com/developers/applications) → Bot → Reset Token |
+| `DISCORD_CLIENT_ID` | Application ID de la misma app → OAuth2 |
+
+> Si estas variables estan vacias el bot de Discord no se inicia, el resto del sistema funciona igual.
+
+## Feature inicial implementada
+
+Comando en chat de Twitch:
+
+- `!luz azul`
+- `!luz rojo`
+- `!luz #0F336F`
+
+El comando cambia el color de las luces configuradas en Philips Hue usando la API v2.
+
+## Scripts
+
+- `npm run dev`: modo desarrollo con watch
+- `npm start`: ejecucion normal
+- `npm run lint`: validacion ESLint
+- `npm run format`: validacion Prettier
+- `npm run test`: pruebas unitarias
+
+## Arquitectura
+
+```text
+src/
+  app/                # Orquestacion de la aplicacion
+  core/               # Configuracion, logging, utilidades transversales
+  components/         # Integraciones e implementaciones por dominio
+    twitch/
+    discord/
+    hue/
+  shared/             # Helpers reutilizables entre componentes
+```
+
+## Documentacion de APIs
+
+- [Twitch](docs/apis/twitch.md)
+- [Philips Hue](docs/apis/hue.md)
+- [Discord](docs/apis/discord.md)
+
+## Nota
+
+`DISCORD_TOKEN` es opcional por ahora. Si no existe, el bot de Discord no se inicia.
+
+## TODO (Roadmap)
+
+- Comando personalizado `!funa {nombreUsuario}`:
+  - Debe ser utilizable desde Discord y Twitch.
+  - Debe contar cuantas veces `{nombreUsuario}` fue mencionado en ese comando (cuantas veces fue funado).
+  - Debe responder con un mensaje tipo: `"{nombreUsuario} ha sido funado {cantidadFunas} veces"`.
+- Niveles de usuario:
+  - Registrar cantidad de mensajes enviados por usuarios en Twitch y Discord.
+  - Subir de nivel en base a cantidad de mensajes.
+  - Considerar bonificadores de experiencia/subida para VIP y suscriptores.
+  - En Discord, permitir excluir canales que no deben sumar niveles.
+  - En Twitch y Discord, excluir mensajes que sean comandos (por ejemplo: `/play`, `!luz`, entre otros).
+- Dashboard de ranking de niveles.
+- Comando "preguntale a la IA":
+  - En Twitch, con comando personalizado de uso exclusivo para moderadores.
+  - Ejemplo: `!ia que paso un dia como hoy en 1954`.
+  - La pregunta debe enviarse a un LLM configurable (por ejemplo Gemini).
