@@ -25,11 +25,37 @@ npm run dev
 | Variable | Descripcion |
 |---|---|
 | `TWITCH_CLIENT_ID` | Client ID de tu app en [dev.twitch.tv/console](https://dev.twitch.tv/console) → Register Your Application |
-| `TWITCH_ACCESS_TOKEN` | Token OAuth del bot con scopes `chat:read` y `chat:edit`. Generalo con la [Twitch CLI](https://github.com/twitchdev/twitch-cli): `twitch token -u -s "chat:read chat:edit"` |
+| `TWITCH_CLIENT_SECRET` | Client Secret de la misma app de Twitch |
+| `TWITCH_ACCESS_TOKEN` | Access token inicial del bot |
+| `TWITCH_REFRESH_TOKEN` | Refresh token inicial del bot (permite renovacion automatica) |
+| `TWITCH_TOKEN_EXPIRES_IN` | Segundos de expiracion del token inicial. `0` fuerza refresh inmediato al iniciar |
+| `TWITCH_TOKEN_FILE` | Ruta del archivo donde se persiste el token renovado (`data/twitch-token.json`) |
 | `TWITCH_CHANNELS` | Nombre(s) de tu canal sin `#`, separados por coma. Ej: `micanal` |
 | `TWITCH_COMMAND_PREFIX` | Prefijo de comandos, por defecto `!` |
 
-> Para generar el token: instala la [Twitch CLI](https://github.com/twitchdev/twitch-cli), ejecuta `twitch configure -i CLIENT_ID -s CLIENT_SECRET` y luego `twitch token -u -s "chat:read chat:edit"`.
+> Recomendado: usa un flujo que entregue `access_token` + `refresh_token`. Si solo tienes access token, el bot no podra renovarlo automaticamente cuando expire.
+
+**Obtener `access_token` y `refresh_token` (Authorization Code):**
+
+1. Abre este URL en tu navegador (reemplaza valores):
+
+```text
+https://id.twitch.tv/oauth2/authorize?response_type=code&client_id=TU_CLIENT_ID&redirect_uri=http://localhost:3000&scope=chat:read+chat:edit
+```
+
+2. Autoriza la app y copia el parametro `code` del redirect.
+3. Intercambia el `code` por tokens:
+
+```bash
+curl -X POST "https://id.twitch.tv/oauth2/token" \
+  -d "client_id=TU_CLIENT_ID" \
+  -d "client_secret=TU_CLIENT_SECRET" \
+  -d "code=EL_CODE_DEL_REDIRECT" \
+  -d "grant_type=authorization_code" \
+  -d "redirect_uri=http://localhost:3000"
+```
+
+4. Copia `access_token` a `TWITCH_ACCESS_TOKEN` y `refresh_token` a `TWITCH_REFRESH_TOKEN`.
 
 ### Philips Hue
 

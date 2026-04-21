@@ -3,5 +3,6 @@ coverage/
 .vscode/
 .env
 .env.local
+data/twitch-token.json
 .DS_Store
 npm-debug.log*
