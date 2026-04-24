@@ -151,25 +151,39 @@ src/
 - [Twitch](docs/apis/twitch.md)
 - [Philips Hue](docs/apis/hue.md)
 - [Discord](docs/apis/discord.md)
+- [Sistema de Funa](docs/funa-system.md)
 
 ## Nota
 
 `DISCORD_TOKEN` es opcional por ahora. Si no existe, el bot de Discord no se inicia.
 
+## Features Implementadas
+
+### ✅ `!luz <color>` (Twitch)
+Cambiar el color de las luces Philips Hue.
+
+### 🚧 `!funa <usuario>` (Twitch - en progreso)
+Contador de funas por usuario con persistencia SQLite. Detalles en [docs/funa-system.md](docs/funa-system.md).
+
 ## TODO (Roadmap)
 
-- Comando personalizado `!funa {nombreUsuario}`:
-  - Debe ser utilizable desde Discord y Twitch.
-  - Debe contar cuantas veces `{nombreUsuario}` fue mencionado en ese comando (cuantas veces fue funado).
-  - Debe responder con un mensaje tipo: `"{nombreUsuario} ha sido funado {cantidadFunas} veces"`.
-- Niveles de usuario:
+- **`!funa` (Twitch)** - EN PROGRESO
+  - ✅ Sistema de persistencia SQLite con identidades canónicas.
+  - ✅ Cooldown por comando por canal.
+  - ✅ Matching automático de nombres y búsqueda de similares.
+  - ⏳ Integración con Discord (reutilizará mismos servicios).
+  - ⏳ Comando de admin para unificar identidades manuales.
+
+- **Niveles de usuario**
   - Registrar cantidad de mensajes enviados por usuarios en Twitch y Discord.
   - Subir de nivel en base a cantidad de mensajes.
   - Considerar bonificadores de experiencia/subida para VIP y suscriptores.
   - En Discord, permitir excluir canales que no deben sumar niveles.
   - En Twitch y Discord, excluir mensajes que sean comandos (por ejemplo: `/play`, `!luz`, entre otros).
-- Dashboard de ranking de niveles.
-- Comando "preguntale a la IA":
+
+- **Dashboard de ranking de niveles**
+
+- **Comando "preguntale a la IA"**
   - En Twitch, con comando personalizado de uso exclusivo para moderadores.
   - Ejemplo: `!ia que paso un dia como hoy en 1954`.
   - La pregunta debe enviarse a un LLM configurable (por ejemplo Gemini).
