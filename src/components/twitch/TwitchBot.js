@@ -37,8 +37,8 @@ export class TwitchBot {
       channels: this.channels,
     });
 
-    this.chatClient.onMessage(async (channel, user, text) => {
-      await this.#onMessage(channel, user, text);
+    this.chatClient.onMessage(async (channel, user, text, msg) => {
+      await this.#onMessage(channel, user, text, msg);
     });
 
     await this.chatClient.connect();
@@ -84,7 +84,7 @@ export class TwitchBot {
     return authProvider;
   }
 
-  async #onMessage(channel, user, text) {
+  async #onMessage(channel, user, text, msg) {
     if (!text.startsWith(this.commandPrefix)) {
       return;
     }
@@ -97,9 +97,15 @@ export class TwitchBot {
     }
 
     try {
+      const userContext = {
+        id: msg?.userInfo?.userId ?? user,
+        username: user,
+        displayName: msg?.userInfo?.displayName ?? user,
+      };
+
       const result = await this.commandRegistry.execute(commandName.toLowerCase(), {
         channel,
-        user,
+        user: userContext,
         text,
         args,
       });
