@@ -1,0 +1,19 @@
+{
+  "platforms": {
+    "twitch": {
+      "memide": {
+        "enabled": true,
+        "response": "/me A $(user) le mide ${random.0-20} cm"
+      },
+      "mecabe": {
+        "enabled": true,
+        "response": "/me A $(user) le caben ${random.0-20} cm"
+      },
+      "beso": {
+        "enabled": true,
+        "response": "${user} ha besado a ${random.chatter}. ${random.pick 'Las babas llegaron hasta el stream 💦💦' 'la temperatura está subiendo🥵'}"
+      }
+    },
+    "discord": {}
+  }
+}
