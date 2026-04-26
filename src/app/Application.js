@@ -1,5 +1,6 @@
 import { loadConfig } from '../core/config/env.js';
 import { loadCooldownConfig } from '../core/config/cooldown-config.js';
+import { loadCustomCommandsConfig } from '../core/config/custom-commands-config.js';
 import { createLogger } from '../core/logger/logger.js';
 import { CommandRegistry } from '../core/commands/CommandRegistry.js';
 import { DatabaseManager } from '../core/db/Database.js';
@@ -12,6 +13,8 @@ import { DiscordBot } from '../components/discord/DiscordBot.js';
 import { IdentityService } from '../core/services/IdentityService.js';
 import { CooldownService } from '../core/services/CooldownService.js';
 import { FunaService } from '../core/services/FunaService.js';
+import { CustomCommandTemplateService } from '../core/services/CustomCommandTemplateService.js';
+import { TwitchCustomCommand } from '../components/twitch/commands/TwitchCustomCommand.js';
 
 export class Application {
   constructor() {
@@ -33,6 +36,10 @@ export class Application {
       filePath: this.config.cooldown.configFile,
       logger: this.logger,
     });
+    const customCommandsConfig = loadCustomCommandsConfig({
+      filePath: this.config.customCommands.configFile,
+      logger: this.logger,
+    });
 
     // Inicializar servicios de identidad, cooldown y funa
     const identityService = new IdentityService({
@@ -51,6 +58,8 @@ export class Application {
       db,
       logger: this.logger,
     });
+
+    const customCommandTemplateService = new CustomCommandTemplateService();
 
     // Inicializar Hue
     const hueApiClient = new HueApiClient({
@@ -84,6 +93,23 @@ export class Application {
         logger: this.logger,
       }),
     );
+
+    const twitchCustomCommands = customCommandsConfig.platforms?.twitch ?? {};
+
+    for (const [commandName, definition] of Object.entries(twitchCustomCommands)) {
+      if (!definition.enabled) {
+        continue;
+      }
+
+      commandRegistry.register(
+        new TwitchCustomCommand({
+          name: commandName,
+          aliases: definition.aliases ?? [],
+          responseTemplate: definition.response,
+          templateService: customCommandTemplateService,
+        }),
+      );
+    }
 
     // Inicializar bots
     const twitchBot = new TwitchBot({
