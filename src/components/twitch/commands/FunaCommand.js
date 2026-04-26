@@ -22,12 +22,12 @@ export class FunaCommand {
 
     const targetUsername = args[0].replace(/^@+/, '');
 
-    // Verificar cooldown por canal (scope global)
-    const scopeKey = `${channel}:global`;
+    // Verificar cooldown por autor
+    const scopeKey = `${user.id}:${channel}:global`;
     const cooldownCheck = this.cooldownService.checkCooldown(this.name, scopeKey);
 
     if (cooldownCheck.onCooldown) {
-      return `Espera un poco, acaban de usar esto. Intenta en ${cooldownCheck.remainingSeconds}s.`;
+      return `@${user.username} debes esperar ${cooldownCheck.remainingSeconds}s para volver a funar.`;
     }
 
     try {
