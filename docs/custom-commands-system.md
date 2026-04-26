@@ -25,6 +25,10 @@ Archivo: `config/custom-commands.json`
       "beso": {
         "enabled": true,
         "response": "${user} ha besado a ${random.chatter}. ${random.pick 'Las babas llegaron hasta el stream 💦💦' 'la temperatura está subiendo🥵'}"
+      },
+      "tortuga": {
+        "enabled": true,
+        "response": "${random.when 0-20 >10 'sacale un id propio' =0 'se escondio la tortuga' else 'la tortuga sigue chill' }"
       }
     },
     "discord": {}
@@ -55,6 +59,30 @@ Variables random:
 - `${random.0-20}` → entero aleatorio inclusive en rango.
 - `${random.pick 'a' 'b' 'c'}` → elige una opción al azar.
 - `${random.chatter}` → elige chatter reciente del canal (excluye al usuario que ejecuta); si no hay, fallback al usuario actual.
+- `${random.when 0-20 >10 'alto' =0 'cero' else 'normal'}` → genera un random en rango y evalúa reglas en orden.
+
+### Sintaxis recomendada para condicionales random
+
+Formato:
+
+```text
+${random.when <min>-<max> <op><n> 'mensaje' <op><n> 'mensaje' else 'fallback'}
+```
+
+Operadores soportados:
+
+- `>`
+- `>=`
+- `<`
+- `<=`
+- `=`
+- `!=`
+
+Ejemplo:
+
+```text
+${random.when 0-20 >10 'sacale un id propio' =0 'se escondio la tortuga' else 'todo normal'}
+```
 
 ## Flujo de ejecución
 
