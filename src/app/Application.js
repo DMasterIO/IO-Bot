@@ -107,6 +107,7 @@ export class Application {
           aliases: definition.aliases ?? [],
           responseTemplate: definition.response,
           templateService: customCommandTemplateService,
+          cooldown: definition.cooldown ?? null,
         }),
       );
     }

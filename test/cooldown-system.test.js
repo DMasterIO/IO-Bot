@@ -194,4 +194,47 @@ describe('Cooldown System', () => {
 
     db.close();
   });
+
+  it('prioriza cooldown definido en el comando sobre config global', async () => {
+    const db = createTestDb();
+    const cooldownService = new CooldownService({
+      db,
+      cooldownConfig: {
+        defaults: { enabled: false, seconds: 5, scope: 'user_channel' },
+        platforms: {
+          twitch: {
+            meme: { enabled: false, seconds: 5, scope: 'user_channel' },
+          },
+        },
+      },
+    });
+
+    const commandRegistry = new CommandRegistry({ cooldownService });
+    commandRegistry.register({
+      name: 'meme',
+      cooldown: { enabled: true, seconds: 60, scope: 'user_channel' },
+      async execute() {
+        return 'ok';
+      },
+    });
+
+    const first = await commandRegistry.execute('meme', {
+      platform: 'twitch',
+      channel: '#canal',
+      user: { id: 'u1', username: 'user1' },
+      args: [],
+    });
+
+    const second = await commandRegistry.execute('meme', {
+      platform: 'twitch',
+      channel: '#canal',
+      user: { id: 'u1', username: 'user1' },
+      args: [],
+    });
+
+    expect(first.message).toBe('ok');
+    expect(second.message).toContain('Espera');
+
+    db.close();
+  });
 });

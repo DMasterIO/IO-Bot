@@ -6,6 +6,13 @@ const commandSchema = z.object({
   enabled: z.boolean().default(true),
   response: z.string().min(1),
   aliases: z.array(z.string().min(1)).optional().default([]),
+  cooldown: z
+    .object({
+      enabled: z.boolean().optional(),
+      seconds: z.coerce.number().int().positive().max(3600).optional(),
+      scope: z.enum(['user_channel', 'channel', 'user_global', 'global']).optional(),
+    })
+    .optional(),
 });
 
 const customCommandsConfigSchema = z.object({

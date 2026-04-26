@@ -29,6 +29,7 @@ export class CommandRegistry {
       commandName: command.name,
       platform: context?.platform,
       context,
+      ruleOverride: command.cooldown ?? null,
     });
 
     if (cooldownEvaluation?.enabled && cooldownEvaluation.onCooldown) {
@@ -45,6 +46,7 @@ export class CommandRegistry {
         commandName: command.name,
         platform: context?.platform,
         context,
+        ruleOverride: command.cooldown ?? null,
       });
     }
 

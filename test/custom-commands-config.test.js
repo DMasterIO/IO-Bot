@@ -36,5 +36,38 @@ describe('loadCustomCommandsConfig', () => {
     expect(result.platforms.twitch.meme.response).toBe('hola ${user}');
     expect(result.platforms.twitch.meme.enabled).toBe(true);
     expect(result.platforms.twitch.meme.aliases).toEqual([]);
+    expect(result.platforms.twitch.meme.cooldown).toBeUndefined();
+  });
+
+  it('acepta cooldown específico por comando custom', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'custom-commands-'));
+    const filePath = path.join(tmpDir, 'commands-with-cooldown.json');
+
+    fs.writeFileSync(filePath, JSON.stringify({
+      platforms: {
+        twitch: {
+          memide: {
+            enabled: true,
+            response: 'hola ${user}',
+            cooldown: {
+              enabled: true,
+              seconds: 20,
+              scope: 'user_channel',
+            },
+          },
+        },
+      },
+    }), 'utf8');
+
+    const result = loadCustomCommandsConfig({
+      filePath,
+      logger: { warn: () => {} },
+    });
+
+    expect(result.platforms.twitch.memide.cooldown).toEqual({
+      enabled: true,
+      seconds: 20,
+      scope: 'user_channel',
+    });
   });
 });
