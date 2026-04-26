@@ -4,5 +4,8 @@ coverage/
 .env
 .env.local
 data/twitch-token.json
+data/*.db
+data/*.db-shm
+data/*.db-wal
 .DS_Store
 npm-debug.log*
