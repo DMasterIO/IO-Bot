@@ -16,7 +16,12 @@ Archivo: `config/custom-commands.json`
     "twitch": {
       "memide": {
         "enabled": true,
-        "response": "/me A $(user) le mide ${random.0-20} cm"
+        "response": "/me A $(user) le mide ${random.0-20} cm",
+        "cooldown": {
+          "enabled": true,
+          "seconds": 20,
+          "scope": "user_channel"
+        }
       },
       "mecabe": {
         "enabled": true,
@@ -106,7 +111,17 @@ flowchart TD
 
 ## Integración con cooldown
 
-Los comandos custom pasan por `CommandRegistry`, así que usan el mismo sistema de cooldown de `config/cooldowns.json`.
+Los comandos custom pasan por `CommandRegistry`, así que usan el mismo sistema de cooldown.
+
+Puedes definir cooldown en dos niveles:
+
+1. Global por comando/plataforma en `config/cooldowns.json`.
+2. Específico por comando custom dentro de `config/custom-commands.json` en la key `cooldown`.
+
+Precedencia:
+
+- Si el comando custom define `cooldown`, esa regla tiene prioridad.
+- Si no define `cooldown`, aplica la regla global de `config/cooldowns.json`.
 
 Ejemplo:
 
