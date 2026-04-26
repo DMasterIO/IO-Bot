@@ -84,6 +84,12 @@ Ejemplo:
 ${random.when 0-20 >10 'sacale un id propio' =0 'se escondio la tortuga' else 'todo normal'}
 ```
 
+Tambien puedes usar expresiones dinámicas dentro de cada rama (por ejemplo `random.pick`):
+
+```text
+${random.when 0-20 >10 random.pick('msgA', 'msgZ') =0 'msgB' else random.pick 'msgDefault' 'msgDefault2'}
+```
+
 ## Flujo de ejecución
 
 ```mermaid
