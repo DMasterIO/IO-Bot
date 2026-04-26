@@ -46,7 +46,7 @@ export class CustomCommandTemplateService {
       const randomExpression = expression.slice('random.'.length);
 
       if (randomExpression.startsWith('when ')) {
-        return this.#randomWhen(randomExpression.slice('when '.length));
+        return this.#randomWhen(randomExpression.slice('when '.length), context);
       }
 
       if (randomExpression === 'chatter') {
@@ -97,11 +97,18 @@ export class CustomCommandTemplateService {
     return picks[this.#randomInt(0, picks.length - 1)];
   }
 
-  #randomWhen(whenExpression) {
+  #randomWhen(whenExpression, context) {
     const trimmed = String(whenExpression).trim();
-    const [rangeToken, ...restTokens] = trimmed.split(/\s+/);
+    const rangeMatch = /^(\d+-\d+)\s+([\s\S]+)$/.exec(trimmed);
 
-    if (!/^\d+-\d+$/.test(rangeToken ?? '')) {
+    if (!rangeMatch) {
+      return '';
+    }
+
+    const rangeToken = rangeMatch[1];
+    const rulesExpression = rangeMatch[2];
+
+    if (!/^\d+-\d+$/.test(rangeToken)) {
       return '';
     }
 
@@ -114,30 +121,149 @@ export class CustomCommandTemplateService {
     }
 
     const randomValue = this.#randomInt(min, max);
-    const rulesExpression = restTokens.join(' ');
-    const rules = [];
+    const parsedRules = this.#parseWhenRules(rulesExpression);
 
-    const ruleRegex = /(>=|<=|>|<|=|!=)\s*(-?\d+)\s*('([^']*)'|"([^"]*)")/g;
-    let ruleMatch;
-
-    while ((ruleMatch = ruleRegex.exec(rulesExpression)) !== null) {
-      rules.push({
-        operator: ruleMatch[1],
-        compareTo: Number(ruleMatch[2]),
-        message: ruleMatch[4] ?? ruleMatch[5] ?? '',
-      });
-    }
-
-    const elseMatch = /(?:^|\s)else\s*('([^']*)'|"([^"]*)")/.exec(rulesExpression);
-    const fallback = elseMatch ? elseMatch[2] ?? elseMatch[3] ?? '' : '';
-
-    for (const rule of rules) {
+    for (const rule of parsedRules.rules) {
       if (this.#matchesRule(randomValue, rule.operator, rule.compareTo)) {
-        return rule.message;
+        return this.#resolveWhenOutcome(rule.outcomeExpression, context);
       }
     }
 
-    return fallback;
+    return this.#resolveWhenOutcome(parsedRules.fallbackExpression, context);
+  }
+
+  #parseWhenRules(rulesExpression) {
+    const rules = [];
+    let fallbackExpression = '';
+    let index = 0;
+    const source = String(rulesExpression);
+
+    while (index < source.length) {
+      index = this.#skipWhitespaces(source, index);
+
+      if (index >= source.length) {
+        break;
+      }
+
+      if (source.slice(index).startsWith('else')) {
+        const afterElse = index + 4;
+
+        if (afterElse === source.length || /\s/.test(source[afterElse])) {
+          fallbackExpression = source.slice(afterElse).trim();
+          break;
+        }
+      }
+
+      const conditionMatch = /^(>=|<=|>|<|=|!=)\s*(-?\d+)\s*/.exec(source.slice(index));
+
+      if (!conditionMatch) {
+        break;
+      }
+
+      const operator = conditionMatch[1];
+      const compareTo = Number(conditionMatch[2]);
+      index += conditionMatch[0].length;
+
+      const nextMarkerIndex = this.#findNextWhenMarker(source, index);
+      const outcomeExpression = source.slice(index, nextMarkerIndex).trim();
+
+      if (outcomeExpression) {
+        rules.push({
+          operator,
+          compareTo,
+          outcomeExpression,
+        });
+      }
+
+      index = nextMarkerIndex;
+    }
+
+    return {
+      rules,
+      fallbackExpression,
+    };
+  }
+
+  #findNextWhenMarker(source, fromIndex) {
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let parenthesisDepth = 0;
+
+    for (let i = fromIndex; i < source.length; i += 1) {
+      const char = source[i];
+
+      if (!inDoubleQuote && char === "'") {
+        inSingleQuote = !inSingleQuote;
+        continue;
+      }
+
+      if (!inSingleQuote && char === '"') {
+        inDoubleQuote = !inDoubleQuote;
+        continue;
+      }
+
+      if (inSingleQuote || inDoubleQuote) {
+        continue;
+      }
+
+      if (char === '(') {
+        parenthesisDepth += 1;
+        continue;
+      }
+
+      if (char === ')') {
+        parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+        continue;
+      }
+
+      if (parenthesisDepth > 0) {
+        continue;
+      }
+
+      if (source.slice(i).startsWith('else')) {
+        const afterElse = i + 4;
+
+        if (afterElse === source.length || /\s/.test(source[afterElse])) {
+          return i;
+        }
+      }
+
+      if (/^(>=|<=|>|<|=|!=)\s*-?\d+/.test(source.slice(i))) {
+        return i;
+      }
+    }
+
+    return source.length;
+  }
+
+  #resolveWhenOutcome(rawOutcomeExpression, context) {
+    const outcomeExpression = String(rawOutcomeExpression ?? '').trim();
+
+    if (!outcomeExpression) {
+      return '';
+    }
+
+    const singleQuoted = /^'([\s\S]*)'$/.exec(outcomeExpression);
+    if (singleQuoted) {
+      return singleQuoted[1];
+    }
+
+    const doubleQuoted = /^"([\s\S]*)"$/.exec(outcomeExpression);
+    if (doubleQuoted) {
+      return doubleQuoted[1];
+    }
+
+    return this.#evaluate(outcomeExpression, context);
+  }
+
+  #skipWhitespaces(source, index) {
+    let current = index;
+
+    while (current < source.length && /\s/.test(source[current])) {
+      current += 1;
+    }
+
+    return current;
   }
 
   #matchesRule(value, operator, compareTo) {

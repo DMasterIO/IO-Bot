@@ -95,4 +95,33 @@ describe('CustomCommandTemplateService', () => {
     expect(renderedZero).toBe('se escondio la tortuga');
     expect(renderedMid).toBe('normal');
   });
+
+  it('random.when permite usar random.pick dentro de ramas y else', () => {
+    const service = new CustomCommandTemplateService();
+
+    const randomHighSpy = vi
+      .spyOn(Math, 'random')
+      .mockReturnValueOnce(0.6) // 12 en rango 0-20 => rama >10
+      .mockReturnValueOnce(0.99); // pick => ultimo elemento
+
+    const renderedHigh = service.render(
+      "${random.when 0-20 >10 random.pick('msgA', 'msgZ') =0 'msgB' else random.pick 'msgDefault' 'msgDefault2'}",
+      {},
+    );
+    randomHighSpy.mockRestore();
+
+    const randomElseSpy = vi
+      .spyOn(Math, 'random')
+      .mockReturnValueOnce(0.3) // 6 en rango 0-20 => else
+      .mockReturnValueOnce(0); // pick => primer elemento
+
+    const renderedElse = service.render(
+      "${random.when 0-20 >10 random.pick('msgA', 'msgZ') =0 'msgB' else random.pick 'msgDefault' 'msgDefault2'}",
+      {},
+    );
+    randomElseSpy.mockRestore();
+
+    expect(renderedHigh).toBe('msgZ');
+    expect(renderedElse).toBe('msgDefault');
+  });
 });
