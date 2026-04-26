@@ -61,4 +61,38 @@ describe('CustomCommandTemplateService', () => {
     expect(rendered).toBe('tres');
     randomSpy.mockRestore();
   });
+
+  it('resuelve random.when para ramas condicionales por rango', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.6); // 12 en rango 0-20
+    const service = new CustomCommandTemplateService();
+
+    const rendered = service.render(
+      "${random.when 0-20 >10 'sacale un id propio' =0 'se escondio la tortuga' else 'meh'}",
+      {},
+    );
+
+    expect(rendered).toBe('sacale un id propio');
+    randomSpy.mockRestore();
+  });
+
+  it('random.when permite rama exacta y fallback else', () => {
+    const service = new CustomCommandTemplateService();
+
+    const randomZeroSpy = vi.spyOn(Math, 'random').mockReturnValue(0); // 0 en rango 0-20
+    const renderedZero = service.render(
+      "${random.when 0-20 >10 'alto' =0 'se escondio la tortuga' else 'normal'}",
+      {},
+    );
+    randomZeroSpy.mockRestore();
+
+    const randomMidSpy = vi.spyOn(Math, 'random').mockReturnValue(0.3); // 6 en rango 0-20
+    const renderedMid = service.render(
+      "${random.when 0-20 >10 'alto' =0 'se escondio la tortuga' else 'normal'}",
+      {},
+    );
+    randomMidSpy.mockRestore();
+
+    expect(renderedZero).toBe('se escondio la tortuga');
+    expect(renderedMid).toBe('normal');
+  });
 });

@@ -45,6 +45,10 @@ export class CustomCommandTemplateService {
     if (expression.startsWith('random.')) {
       const randomExpression = expression.slice('random.'.length);
 
+      if (randomExpression.startsWith('when ')) {
+        return this.#randomWhen(randomExpression.slice('when '.length));
+      }
+
       if (randomExpression === 'chatter') {
         return this.#randomChatter(context);
       }
@@ -91,5 +95,67 @@ export class CustomCommandTemplateService {
     }
 
     return picks[this.#randomInt(0, picks.length - 1)];
+  }
+
+  #randomWhen(whenExpression) {
+    const trimmed = String(whenExpression).trim();
+    const [rangeToken, ...restTokens] = trimmed.split(/\s+/);
+
+    if (!/^\d+-\d+$/.test(rangeToken ?? '')) {
+      return '';
+    }
+
+    const [minRaw, maxRaw] = rangeToken.split('-');
+    const min = Number(minRaw);
+    const max = Number(maxRaw);
+
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) {
+      return '';
+    }
+
+    const randomValue = this.#randomInt(min, max);
+    const rulesExpression = restTokens.join(' ');
+    const rules = [];
+
+    const ruleRegex = /(>=|<=|>|<|=|!=)\s*(-?\d+)\s*('([^']*)'|"([^"]*)")/g;
+    let ruleMatch;
+
+    while ((ruleMatch = ruleRegex.exec(rulesExpression)) !== null) {
+      rules.push({
+        operator: ruleMatch[1],
+        compareTo: Number(ruleMatch[2]),
+        message: ruleMatch[4] ?? ruleMatch[5] ?? '',
+      });
+    }
+
+    const elseMatch = /(?:^|\s)else\s*('([^']*)'|"([^"]*)")/.exec(rulesExpression);
+    const fallback = elseMatch ? elseMatch[2] ?? elseMatch[3] ?? '' : '';
+
+    for (const rule of rules) {
+      if (this.#matchesRule(randomValue, rule.operator, rule.compareTo)) {
+        return rule.message;
+      }
+    }
+
+    return fallback;
+  }
+
+  #matchesRule(value, operator, compareTo) {
+    switch (operator) {
+      case '>':
+        return value > compareTo;
+      case '>=':
+        return value >= compareTo;
+      case '<':
+        return value < compareTo;
+      case '<=':
+        return value <= compareTo;
+      case '=':
+        return value === compareTo;
+      case '!=':
+        return value !== compareTo;
+      default:
+        return false;
+    }
   }
 }
