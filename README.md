@@ -191,6 +191,7 @@ src/
 - [Arquitectura](docs/architecture.md)
 - [Core Subsystems](docs/core-subsystems.md)
 - [Subsistema de Cooldown](docs/cooldown-system.md)
+- [Sistema de Luz](docs/light-system.md)
 - [Sistema de Funa](docs/funa-system.md)
 - [Guia: Agregar Comandos](docs/development/add-command.md)
 - [Buenas Practicas](docs/development/best-practices.md)

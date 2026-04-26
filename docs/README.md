@@ -14,6 +14,7 @@ Este índice organiza la documentación por intención de lectura para evitar du
 
 ## 3. Features
 
+- `docs/light-system.md`: documentación completa de la feature `!luz` (flujo, configuración, troubleshooting).
 - `docs/funa-system.md`: documentación completa de la feature `!funa` (quickstart + arquitectura + troubleshooting).
 
 ## 4. Integraciones externas
