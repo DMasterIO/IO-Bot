@@ -30,6 +30,7 @@ npm run dev
 | `TWITCH_REFRESH_TOKEN` | Refresh token inicial del bot (permite renovacion automatica) |
 | `TWITCH_TOKEN_EXPIRES_IN` | Segundos de expiracion del token inicial. `0` fuerza refresh inmediato al iniciar |
 | `TWITCH_TOKEN_FILE` | Ruta del archivo donde se persiste el token renovado (`data/twitch-token.json`) |
+| `COOLDOWN_CONFIG_FILE` | Ruta del archivo JSON de cooldowns por plataforma/comando (`config/cooldowns.json`) |
 | `TWITCH_CHANNELS` | Nombre(s) de tu canal sin `#`, separados por coma. Ej: `micanal` |
 | `TWITCH_COMMAND_PREFIX` | Prefijo de comandos, por defecto `!` |
 
@@ -115,6 +116,44 @@ Ese endpoint devuelve recursos `grouped_light`. Copia sus `id` en `HUE_GROUPED_L
 
 > Si estas variables estan vacias el bot de Discord no se inicia, el resto del sistema funciona igual.
 
+### Cooldowns por comando
+
+La configuracion de cooldown esta centralizada en `config/cooldowns.json`.
+
+Ejemplo:
+
+```json
+{
+  "defaults": {
+    "enabled": false,
+    "seconds": 5,
+    "scope": "user_channel"
+  },
+  "platforms": {
+    "twitch": {
+      "funa": {
+        "enabled": true,
+        "seconds": 8,
+        "scope": "user_channel"
+      },
+      "luz": {
+        "enabled": true,
+        "seconds": 5,
+        "scope": "user_channel"
+      }
+    },
+    "discord": {}
+  }
+}
+```
+
+Scopes soportados:
+
+- `user_channel`: mismo usuario en mismo canal
+- `channel`: global por canal
+- `user_global`: mismo usuario en toda la plataforma
+- `global`: global por plataforma
+
 ## Feature inicial implementada
 
 Comando en chat de Twitch:
@@ -169,7 +208,7 @@ Contador de funas por usuario con persistencia SQLite. Detalles en [docs/funa-sy
 
 - **`!funa` (Twitch)** - EN PROGRESO
   - ✅ Sistema de persistencia SQLite con identidades canónicas.
-  - ✅ Cooldown por comando por canal.
+  - ✅ Cooldown por plataforma/comando con estrategia configurable.
   - ✅ Matching automático de nombres y búsqueda de similares.
   - ⏳ Integración con Discord (reutilizará mismos servicios).
   - ⏳ Comando de admin para unificar identidades manuales.

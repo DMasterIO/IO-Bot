@@ -1,4 +1,5 @@
 import { loadConfig } from '../core/config/env.js';
+import { loadCooldownConfig } from '../core/config/cooldown-config.js';
 import { createLogger } from '../core/logger/logger.js';
 import { CommandRegistry } from '../core/commands/CommandRegistry.js';
 import { DatabaseManager } from '../core/db/Database.js';
@@ -28,6 +29,10 @@ export class Application {
     });
     await this.databaseManager.initialize();
     const db = this.databaseManager.getDb();
+    const cooldownConfig = loadCooldownConfig({
+      filePath: this.config.cooldown.configFile,
+      logger: this.logger,
+    });
 
     // Inicializar servicios de identidad, cooldown y funa
     const identityService = new IdentityService({
@@ -39,6 +44,7 @@ export class Application {
     const cooldownService = new CooldownService({
       db,
       logger: this.logger,
+      cooldownConfig,
     });
 
     const funaService = new FunaService({
@@ -62,7 +68,10 @@ export class Application {
     });
 
     // Registrar comandos
-    const commandRegistry = new CommandRegistry();
+    const commandRegistry = new CommandRegistry({
+      cooldownService,
+      logger: this.logger,
+    });
     commandRegistry.register(
       new LightCommand({
         hueLightService,
@@ -71,7 +80,6 @@ export class Application {
     commandRegistry.register(
       new FunaCommand({
         identityService,
-        cooldownService,
         funaService,
         logger: this.logger,
       }),

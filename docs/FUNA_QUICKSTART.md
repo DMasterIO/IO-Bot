@@ -14,6 +14,7 @@ npm install  # Instala better-sqlite3 y dependencias
 ```bash
 npm test              # Suite completa
 npm test -- test/funa-system.test.js  # Solo tests de funa
+npm test -- test/cooldown-system.test.js  # Suite dedicada de cooldowns
 ```
 
 ## Ejecutar el Bot
@@ -39,9 +40,9 @@ Bot: juanperez ha sido funado 5 veces 😅
 ```
 
 ## Cooldowns
-- `!funa`: 8 segundos por canal
-- El cooldown es global (aplica para cualquier usuario en ese canal)
-- Si intenta en cooldown: `"Espera un poco, acaban de usar esto. Intenta en 8s."`
+- `!funa`: 8 segundos por usuario (scope por usuario+canal)
+- El cooldown aplica si la misma persona intenta invocar el comando repetidamente en ese rango
+- Si intenta en cooldown: `"Espera 8s antes de volver a usar !funa."`
 
 ## Unificación de Identidades
 El sistema auto-matchea usuarios similares:

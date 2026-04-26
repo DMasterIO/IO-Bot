@@ -1,0 +1,22 @@
+{
+  "defaults": {
+    "enabled": false,
+    "seconds": 5,
+    "scope": "user_channel"
+  },
+  "platforms": {
+    "twitch": {
+      "funa": {
+        "enabled": true,
+        "seconds": 8,
+        "scope": "user_channel"
+      },
+      "luz": {
+        "enabled": true,
+        "seconds": 5,
+        "scope": "user_channel"
+      }
+    },
+    "discord": {}
+  }
+}
