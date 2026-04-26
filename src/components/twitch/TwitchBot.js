@@ -104,6 +104,7 @@ export class TwitchBot {
       };
 
       const result = await this.commandRegistry.execute(commandName.toLowerCase(), {
+        platform: 'twitch',
         channel,
         user: userContext,
         text,

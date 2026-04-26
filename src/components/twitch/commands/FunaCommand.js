@@ -1,19 +1,17 @@
 export class FunaCommand {
   constructor({
     identityService,
-    cooldownService,
     funaService,
     logger,
   }) {
     this.name = 'funa';
     this.identityService = identityService;
-    this.cooldownService = cooldownService;
     this.funaService = funaService;
     this.logger = logger;
   }
 
   async execute(context) {
-    const { channel, user, args, text } = context;
+    const { user, args, text } = context;
 
     // Validar que se pasó un nombre de usuario
     if (!args || args.length === 0) {
@@ -21,14 +19,6 @@ export class FunaCommand {
     }
 
     const targetUsername = args[0].replace(/^@+/, '');
-
-    // Verificar cooldown por canal (scope global)
-    const scopeKey = `${channel}:global`;
-    const cooldownCheck = this.cooldownService.checkCooldown(this.name, scopeKey);
-
-    if (cooldownCheck.onCooldown) {
-      return `Espera un poco, acaban de usar esto. Intenta en ${cooldownCheck.remainingSeconds}s.`;
-    }
 
     try {
       // Obtener o crear identidad del actor (quien ejecuta el comando)
@@ -68,9 +58,6 @@ export class FunaCommand {
 
       // Obtener conteo actualizado
       const funaCount = this.funaService.getFunaCount(targetUser.user_id);
-
-      // Registrar uso de comando (actualizar cooldown)
-      this.cooldownService.recordUsage(this.name, scopeKey);
 
       return `${targetUser.username} ha sido funado ${funaCount} veces 😅`;
     } catch (error) {

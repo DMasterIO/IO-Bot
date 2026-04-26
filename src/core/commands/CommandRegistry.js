@@ -1,6 +1,8 @@
 export class CommandRegistry {
-  constructor() {
+  constructor({ cooldownService, logger } = {}) {
     this.commands = new Map();
+    this.cooldownService = cooldownService;
+    this.logger = logger;
   }
 
   register(command) {
@@ -23,7 +25,28 @@ export class CommandRegistry {
       };
     }
 
+    const cooldownEvaluation = this.cooldownService?.evaluateCooldown({
+      commandName: command.name,
+      platform: context?.platform,
+      context,
+    });
+
+    if (cooldownEvaluation?.enabled && cooldownEvaluation.onCooldown) {
+      return {
+        handled: true,
+        message: `Espera ${cooldownEvaluation.remainingSeconds}s antes de volver a usar !${command.name}.`,
+      };
+    }
+
     const message = await command.execute(context);
+
+    if (cooldownEvaluation?.enabled) {
+      this.cooldownService.recordCommandUsage({
+        commandName: command.name,
+        platform: context?.platform,
+        context,
+      });
+    }
 
     return {
       handled: true,
