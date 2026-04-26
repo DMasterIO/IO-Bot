@@ -185,12 +185,21 @@ src/
   shared/             # Helpers reutilizables entre componentes
 ```
 
+## Documentacion
+
+- [Indice de Documentacion](docs/README.md)
+- [Arquitectura](docs/architecture.md)
+- [Core Subsystems](docs/core-subsystems.md)
+- [Subsistema de Cooldown](docs/cooldown-system.md)
+- [Sistema de Funa](docs/funa-system.md)
+- [Guia: Agregar Comandos](docs/development/add-command.md)
+- [Buenas Practicas](docs/development/best-practices.md)
+
 ## Documentacion de APIs
 
 - [Twitch](docs/apis/twitch.md)
 - [Philips Hue](docs/apis/hue.md)
 - [Discord](docs/apis/discord.md)
-- [Sistema de Funa](docs/funa-system.md)
 
 ## Nota
 

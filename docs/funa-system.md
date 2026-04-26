@@ -1,5 +1,33 @@
 # Sistema de Funa
 
+## Quickstart
+
+### Requisitos
+
+- Node.js 25.9.0+
+- Variables de entorno de Twitch configuradas
+- Base de datos SQLite inicializable en `data/io-bot.db`
+
+### Ejecutar
+
+```bash
+npm install
+npm run dev
+```
+
+### Uso rápido
+
+```text
+!funa <usuario>
+```
+
+Ejemplo:
+
+```text
+Usuario: !funa juanperez
+Bot: juanperez ha sido funado 5 veces 😅
+```
+
 ## Descripción
 
 El sistema de funa permite que usuarios ejecuten el comando `!funa <usuario>` en Twitch para "funar" (mencionar de forma jocosa) a otros usuarios. El bot mantiene un contador de cuántas veces cada usuario ha sido funado.
@@ -188,3 +216,20 @@ Tests cubiertos:
 - Gestión de cooldowns.
 - Registro y conteo de eventos de funa.
 - Estadísticas globales.
+
+## Troubleshooting
+
+Error: `no such column`
+
+- Revisa que las migraciones hayan corrido al iniciar.
+- Si trabajas local y el esquema cambió, recrea `data/io-bot.db`.
+
+Error: `UNIQUE constraint failed`
+
+- Verifica colisiones de identidad en `identities (platform, platform_user_id)`.
+- Revisa casos de merge manual incompleto.
+
+Cooldown no se aplica como esperas
+
+- Revisa `config/cooldowns.json`.
+- Verifica `scope` y `enabled` para plataforma/comando.
