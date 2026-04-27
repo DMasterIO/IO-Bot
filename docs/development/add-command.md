@@ -93,6 +93,10 @@ Plantilla recomendada:
 
 - `docs/development/feature-doc-template.md`
 
+Referencia de implementación basada en configuración:
+
+- `docs/custom-commands-system.md`
+
 ## Checklist de PR
 
 - [ ] Comando implementado y registrado.

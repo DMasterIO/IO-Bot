@@ -34,8 +34,10 @@ export class CooldownService {
   /**
    * Evalúa cooldown para un comando en un contexto específico.
    */
-  evaluateCooldown({ commandName, platform, context }) {
-    const rule = this.getRule(platform, commandName);
+  evaluateCooldown({ commandName, platform, context, ruleOverride = null }) {
+    const rule = ruleOverride
+      ? this.#normalizeRule(ruleOverride, this.cooldownConfig.defaults)
+      : this.getRule(platform, commandName);
 
     if (!rule.enabled) {
       return {
@@ -62,8 +64,10 @@ export class CooldownService {
   /**
    * Registra uso de comando desde contexto/plataforma.
    */
-  recordCommandUsage({ commandName, platform, context }) {
-    const rule = this.getRule(platform, commandName);
+  recordCommandUsage({ commandName, platform, context, ruleOverride = null }) {
+    const rule = ruleOverride
+      ? this.#normalizeRule(ruleOverride, this.cooldownConfig.defaults)
+      : this.getRule(platform, commandName);
 
     if (!rule.enabled) {
       return false;

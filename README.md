@@ -31,6 +31,7 @@ npm run dev
 | `TWITCH_TOKEN_EXPIRES_IN` | Segundos de expiracion del token inicial. `0` fuerza refresh inmediato al iniciar |
 | `TWITCH_TOKEN_FILE` | Ruta del archivo donde se persiste el token renovado (`data/twitch-token.json`) |
 | `COOLDOWN_CONFIG_FILE` | Ruta del archivo JSON de cooldowns por plataforma/comando (`config/cooldowns.json`) |
+| `CUSTOM_COMMANDS_CONFIG_FILE` | Ruta del archivo JSON de comandos custom (`config/custom-commands.json`) |
 | `TWITCH_CHANNELS` | Nombre(s) de tu canal sin `#`, separados por coma. Ej: `micanal` |
 | `TWITCH_COMMAND_PREFIX` | Prefijo de comandos, por defecto `!` |
 
@@ -191,6 +192,7 @@ src/
 - [Arquitectura](docs/architecture.md)
 - [Core Subsystems](docs/core-subsystems.md)
 - [Subsistema de Cooldown](docs/cooldown-system.md)
+- [Sistema de Comandos Custom](docs/custom-commands-system.md)
 - [Sistema de Luz](docs/light-system.md)
 - [Sistema de Funa](docs/funa-system.md)
 - [Guia: Agregar Comandos](docs/development/add-command.md)

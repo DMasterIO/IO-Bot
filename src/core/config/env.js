@@ -14,6 +14,7 @@ const schema = z.object({
   TWITCH_TOKEN_EXPIRES_IN: z.coerce.number().optional().default(0),
   TWITCH_TOKEN_FILE: z.string().default('data/twitch-token.json'),
   COOLDOWN_CONFIG_FILE: z.string().default('config/cooldowns.json'),
+  CUSTOM_COMMANDS_CONFIG_FILE: z.string().default('config/custom-commands.json'),
   TWITCH_CHANNELS: z.string().min(1),
   TWITCH_COMMAND_PREFIX: z.string().default('!'),
   DISCORD_TOKEN: z.string().optional(),
@@ -55,6 +56,9 @@ export const loadConfig = () => {
     },
     cooldown: {
       configFile: env.COOLDOWN_CONFIG_FILE,
+    },
+    customCommands: {
+      configFile: env.CUSTOM_COMMANDS_CONFIG_FILE,
     },
     discord: {
       token: env.DISCORD_TOKEN,
