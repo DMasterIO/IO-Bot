@@ -1,33 +1,106 @@
 export class CooldownService {
-  // Configuración de cooldowns por comando (en segundos)
-  static DEFAULT_COOLDOWNS = {
-    luz: 5,
-    funa: 8,
-    ia: 20,
+  static DEFAULT_RULE = {
+    enabled: false,
+    seconds: 5,
+    scope: 'user_channel',
   };
+
+  static SUPPORTED_SCOPES = new Set(['user_channel', 'channel', 'user_global', 'global']);
 
   constructor({ db, logger, cooldownConfig = {} }) {
     this.db = db;
     this.logger = logger;
+
     this.cooldownConfig = {
-      ...CooldownService.DEFAULT_COOLDOWNS,
-      ...cooldownConfig,
+      defaults: this.#normalizeRule(cooldownConfig.defaults),
+      platforms: cooldownConfig.platforms ?? {},
     };
   }
 
   /**
-   * Obtiene el cooldown configurado para un comando.
+   * Regla de cooldown para plataforma+comando.
    */
-  getCooldownDuration(commandName) {
-    return this.cooldownConfig[commandName] || 5; // Default 5 segundos
+  getRule(platform, commandName) {
+    const defaults = this.cooldownConfig.defaults;
+    const rawRule = this.cooldownConfig.platforms?.[platform]?.[commandName];
+
+    if (!rawRule) {
+      return defaults;
+    }
+
+    return this.#normalizeRule(rawRule, defaults);
   }
 
   /**
-   * Chequea si un comando está en cooldown.
-   * Retorna { onCooldown: boolean, remainingSeconds: number }
+   * Evalúa cooldown para un comando en un contexto específico.
    */
-  checkCooldown(commandName, scopeKey) {
-    const cooldownDuration = this.getCooldownDuration(commandName);
+  evaluateCooldown({ commandName, platform, context, ruleOverride = null }) {
+    const rule = ruleOverride
+      ? this.#normalizeRule(ruleOverride, this.cooldownConfig.defaults)
+      : this.getRule(platform, commandName);
+
+    if (!rule.enabled) {
+      return {
+        enabled: false,
+        onCooldown: false,
+        remainingSeconds: 0,
+        scopeKey: null,
+        rule,
+      };
+    }
+
+    const scopeKey = this.buildScopeKey({ platform, scope: rule.scope, context });
+    const check = this.#checkCooldown(commandName, scopeKey, rule.seconds);
+
+    return {
+      enabled: true,
+      onCooldown: check.onCooldown,
+      remainingSeconds: check.remainingSeconds,
+      scopeKey,
+      rule,
+    };
+  }
+
+  /**
+   * Registra uso de comando desde contexto/plataforma.
+   */
+  recordCommandUsage({ commandName, platform, context, ruleOverride = null }) {
+    const rule = ruleOverride
+      ? this.#normalizeRule(ruleOverride, this.cooldownConfig.defaults)
+      : this.getRule(platform, commandName);
+
+    if (!rule.enabled) {
+      return false;
+    }
+
+    const scopeKey = this.buildScopeKey({ platform, scope: rule.scope, context });
+    this.#recordUsage(commandName, scopeKey);
+
+    return true;
+  }
+
+  /**
+   * Construye la clave de scope según estrategia.
+   */
+  buildScopeKey({ platform, scope, context }) {
+    const channelId = context?.channel ?? context?.guildId ?? 'global-channel';
+    const userId = context?.user?.id ?? context?.user?.username ?? 'anonymous-user';
+
+    switch (scope) {
+      case 'channel':
+        return `${platform}:channel:${channelId}`;
+      case 'user_global':
+        return `${platform}:user:${userId}`;
+      case 'global':
+        return `${platform}:global`;
+      case 'user_channel':
+      default:
+        return `${platform}:channel:${channelId}:user:${userId}`;
+    }
+  }
+
+  #checkCooldown(commandName, scopeKey, cooldownDurationSeconds) {
+    const cooldownDuration = cooldownDurationSeconds;
     const now = Date.now();
 
     const record = this.db
@@ -51,10 +124,7 @@ export class CooldownService {
     };
   }
 
-  /**
-   * Registra el uso de un comando (actualiza timestamp de last_used_at).
-   */
-  recordUsage(commandName, scopeKey) {
+  #recordUsage(commandName, scopeKey) {
     const now = Date.now();
     const stmt = this.db.prepare(`
       INSERT INTO command_cooldowns (command_name, scope_key, last_used_at, created_at, updated_at)
@@ -80,5 +150,31 @@ export class CooldownService {
    */
   clearAllCooldowns() {
     this.db.exec('DELETE FROM command_cooldowns');
+  }
+
+  #normalizeRule(rule = {}, baseRule = CooldownService.DEFAULT_RULE) {
+    const normalized = {
+      enabled: rule.enabled ?? baseRule.enabled,
+      seconds: rule.seconds ?? baseRule.seconds,
+      scope: rule.scope ?? baseRule.scope,
+    };
+
+    if (!CooldownService.SUPPORTED_SCOPES.has(normalized.scope)) {
+      this.logger?.warn?.(
+        { scope: normalized.scope },
+        'Scope de cooldown no soportado. Se usara user_channel',
+      );
+      normalized.scope = 'user_channel';
+    }
+
+    if (!Number.isFinite(normalized.seconds) || normalized.seconds <= 0) {
+      this.logger?.warn?.(
+        { seconds: normalized.seconds },
+        'Duracion de cooldown invalida. Se usara 5 segundos',
+      );
+      normalized.seconds = 5;
+    }
+
+    return normalized;
   }
 }

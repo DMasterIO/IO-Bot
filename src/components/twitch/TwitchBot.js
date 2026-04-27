@@ -27,6 +27,7 @@ export class TwitchBot {
     this.commandRegistry = commandRegistry;
     this.logger = logger;
     this.chatClient = null;
+    this.channelChatters = new Map();
   }
 
   async start() {
@@ -85,6 +86,14 @@ export class TwitchBot {
   }
 
   async #onMessage(channel, user, text, msg) {
+    const userContext = {
+      id: msg?.userInfo?.userId ?? user,
+      username: user,
+      displayName: msg?.userInfo?.displayName ?? user,
+    };
+
+    this.#trackChatter(channel, userContext);
+
     if (!text.startsWith(this.commandPrefix)) {
       return;
     }
@@ -97,17 +106,13 @@ export class TwitchBot {
     }
 
     try {
-      const userContext = {
-        id: msg?.userInfo?.userId ?? user,
-        username: user,
-        displayName: msg?.userInfo?.displayName ?? user,
-      };
-
       const result = await this.commandRegistry.execute(commandName.toLowerCase(), {
+        platform: 'twitch',
         channel,
         user: userContext,
         text,
         args,
+        chatters: this.#getChatters(channel, userContext.id),
       });
 
       if (result.handled && result.message) {
@@ -124,5 +129,29 @@ export class TwitchBot {
       );
       await this.chatClient.say(channel, 'No pude ejecutar ese comando en este momento.');
     }
+  }
+
+  #trackChatter(channel, user) {
+    const currentChatters = this.channelChatters.get(channel) ?? [];
+    const withoutUser = currentChatters.filter((chatter) => chatter.id !== user.id);
+
+    withoutUser.push({
+      id: user.id,
+      name: user.displayName ?? user.username,
+    });
+
+    if (withoutUser.length > 200) {
+      withoutUser.shift();
+    }
+
+    this.channelChatters.set(channel, withoutUser);
+  }
+
+  #getChatters(channel, excludeUserId) {
+    const currentChatters = this.channelChatters.get(channel) ?? [];
+
+    return currentChatters
+      .filter((chatter) => chatter.id !== excludeUserId)
+      .map((chatter) => chatter.name);
   }
 }

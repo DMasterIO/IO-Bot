@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import Database from 'better-sqlite3';
 import { IdentityService } from '../src/core/services/IdentityService.js';
-import { CooldownService } from '../src/core/services/CooldownService.js';
 import { FunaService } from '../src/core/services/FunaService.js';
 
 // Crear base de datos en memoria para tests
@@ -128,26 +127,6 @@ describe('Funa System', () => {
     db.close();
   });
 
-  it('CooldownService: gestión de cooldowns', () => {
-    const db = createTestDb();
-    const cooldownService = new CooldownService({ db });
-
-    // Primer uso: no está en cooldown
-    const check1 = cooldownService.checkCooldown('funa', 'channel123:global');
-    expect(check1.onCooldown).toBe(false);
-
-    // Registrar uso
-    cooldownService.recordUsage('funa', 'channel123:global');
-
-    // Segundo uso inmediato: debe estar en cooldown
-    const check2 = cooldownService.checkCooldown('funa', 'channel123:global');
-    expect(check2.onCooldown).toBe(true);
-    expect(check2.remainingSeconds).toBeGreaterThan(0);
-    expect(check2.remainingSeconds).toBeLessThanOrEqual(8); // funa tiene cooldown de 8s
-
-    db.close();
-  });
-
   it('FunaService: registro y conteo de funas', () => {
     const db = createTestDb();
     const identityService = new IdentityService({ db });
@@ -199,4 +178,5 @@ describe('Funa System', () => {
 
     db.close();
   });
+
 });

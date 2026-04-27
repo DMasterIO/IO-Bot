@@ -1,5 +1,33 @@
 # Sistema de Funa
 
+## Quickstart
+
+### Requisitos
+
+- Node.js 25.9.0+
+- Variables de entorno de Twitch configuradas
+- Base de datos SQLite inicializable en `data/io-bot.db`
+
+### Ejecutar
+
+```bash
+npm install
+npm run dev
+```
+
+### Uso rápido
+
+```text
+!funa <usuario>
+```
+
+Ejemplo:
+
+```text
+Usuario: !funa juanperez
+Bot: juanperez ha sido funado 5 veces 😅
+```
+
 ## Descripción
 
 El sistema de funa permite que usuarios ejecuten el comando `!funa <usuario>` en Twitch para "funar" (mencionar de forma jocosa) a otros usuarios. El bot mantiene un contador de cuántas veces cada usuario ha sido funado.
@@ -16,9 +44,9 @@ El sistema de funa permite que usuarios ejecuten el comando `!funa <usuario>` en
 
 ### 2. Cooldown por Comando
 - Cada comando tiene un cooldown configurable (ej: `funa` tiene 8 segundos).
-- El cooldown es **por canal y global** (no por usuario), para evitar spam grupal.
-- Si se intenta usar un comando en cooldown, el bot responde: `"Espera un poco, acaban de usar esto. Intenta en Xs."`
-- Configuración de cooldowns en `CooldownService.DEFAULT_COOLDOWNS`.
+- El cooldown es **por usuario y por canal** (además de por comando).
+- Si se intenta usar un comando en cooldown, el bot responde: `"Espera Xs antes de volver a usar !<comando>."`
+- Configuración centralizada en `config/cooldowns.json`.
 
 ### 3. Persistencia en SQLite
 - Base de datos robusta y ligera sin requerimientos de servidor externo.
@@ -61,7 +89,7 @@ juanperez ha sido funado 5 veces 😅
 - Campos: actor (identidad), target (usuario), plataforma, timestamp.
 
 #### `command_cooldowns`
-- Control de cooldowns por comando y scope (ej: `command=funa, scope=channel#twitch:global`).
+- Control de cooldowns por comando y scope (ej: `command=funa, scope=channel#twitch:user:12345`).
 - Almacena `last_used_at` en milisegundos desde epoch.
 
 ### Servicios
@@ -85,14 +113,18 @@ identityService.mergeUsers(sourceUserId, targetUserId, mergedBy, reason);
 
 #### `CooldownService`
 ```javascript
-// Verificar si comando está en cooldown
-const check = cooldownService.checkCooldown('funa', 'channel#twitch:global');
+const check = cooldownService.evaluateCooldown({
+  commandName: 'funa',
+  platform: 'twitch',
+  context: {
+    channel: '#canal',
+    user: { id: '12345' },
+  },
+});
+
 if (check.onCooldown) {
   console.log(`Espera ${check.remainingSeconds}s`);
 }
-
-// Registrar uso de comando
-cooldownService.recordUsage('funa', 'channel#twitch:global');
 ```
 
 #### `FunaService`
@@ -116,7 +148,6 @@ const stats = funaService.getFunaStats(); // { mostFunedUsers, topFuners }
 ```javascript
 new FunaCommand({
   identityService,
-  cooldownService,
   funaService,
   logger
 })
@@ -124,17 +155,17 @@ new FunaCommand({
 
 Flujo:
 1. Usuario ejecuta `!funa <target>`.
-2. Se verifica cooldown global del canal.
+2. Middleware de comandos valida cooldown segun `config/cooldowns.json`.
 3. Se obtiene/crea identidad del actor.
 4. Se busca usuario target por nombre (similar o exacto).
 5. Se registra evento en DB.
-6. Se retorna mensaje con conteo actualizado.
+6. Middleware registra uso del comando y se retorna mensaje con conteo actualizado.
 
 ## Configuración
 
 ### Variables de Entorno
 - `DB_PATH`: Ruta de la base de datos (default: `data/io-bot.db`).
-- Cooldowns personalizados pueden configurarse en `CooldownService` constructor.
+- `COOLDOWN_CONFIG_FILE`: Ruta del archivo JSON de cooldowns (default: `config/cooldowns.json`).
 
 ### Threshold de Similitud
 El umbral de matching automático es configurable por defecto a `0.85` (escala 0-1):
@@ -150,7 +181,6 @@ El diseño está pensado para reutilizar los mismos servicios en Discord:
 // En DiscordBot, igual que en TwitchBot:
 const discordFunaCommand = new FunaCommand({
   identityService, // compartido
-  cooldownService, // compartido
   funaService,    // compartido
   logger
 });
@@ -175,9 +205,31 @@ Ejecutar tests del sistema de funa:
 npm test -- test/funa-system.test.js
 ```
 
+Ejecutar suite dedicada de cooldowns:
+```bash
+npm test -- test/cooldown-system.test.js
+```
+
 Tests cubiertos:
 - Creación y matching automático de identidades.
 - Búsqueda de usuarios similares.
 - Gestión de cooldowns.
 - Registro y conteo de eventos de funa.
 - Estadísticas globales.
+
+## Troubleshooting
+
+Error: `no such column`
+
+- Revisa que las migraciones hayan corrido al iniciar.
+- Si trabajas local y el esquema cambió, recrea `data/io-bot.db`.
+
+Error: `UNIQUE constraint failed`
+
+- Verifica colisiones de identidad en `identities (platform, platform_user_id)`.
+- Revisa casos de merge manual incompleto.
+
+Cooldown no se aplica como esperas
+
+- Revisa `config/cooldowns.json`.
+- Verifica `scope` y `enabled` para plataforma/comando.

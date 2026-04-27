@@ -30,6 +30,8 @@ npm run dev
 | `TWITCH_REFRESH_TOKEN` | Refresh token inicial del bot (permite renovacion automatica) |
 | `TWITCH_TOKEN_EXPIRES_IN` | Segundos de expiracion del token inicial. `0` fuerza refresh inmediato al iniciar |
 | `TWITCH_TOKEN_FILE` | Ruta del archivo donde se persiste el token renovado (`data/twitch-token.json`) |
+| `COOLDOWN_CONFIG_FILE` | Ruta del archivo JSON de cooldowns por plataforma/comando (`config/cooldowns.json`) |
+| `CUSTOM_COMMANDS_CONFIG_FILE` | Ruta del archivo JSON de comandos custom (`config/custom-commands.json`) |
 | `TWITCH_CHANNELS` | Nombre(s) de tu canal sin `#`, separados por coma. Ej: `micanal` |
 | `TWITCH_COMMAND_PREFIX` | Prefijo de comandos, por defecto `!` |
 
@@ -115,6 +117,44 @@ Ese endpoint devuelve recursos `grouped_light`. Copia sus `id` en `HUE_GROUPED_L
 
 > Si estas variables estan vacias el bot de Discord no se inicia, el resto del sistema funciona igual.
 
+### Cooldowns por comando
+
+La configuracion de cooldown esta centralizada en `config/cooldowns.json`.
+
+Ejemplo:
+
+```json
+{
+  "defaults": {
+    "enabled": false,
+    "seconds": 5,
+    "scope": "user_channel"
+  },
+  "platforms": {
+    "twitch": {
+      "funa": {
+        "enabled": true,
+        "seconds": 8,
+        "scope": "user_channel"
+      },
+      "luz": {
+        "enabled": true,
+        "seconds": 5,
+        "scope": "user_channel"
+      }
+    },
+    "discord": {}
+  }
+}
+```
+
+Scopes soportados:
+
+- `user_channel`: mismo usuario en mismo canal
+- `channel`: global por canal
+- `user_global`: mismo usuario en toda la plataforma
+- `global`: global por plataforma
+
 ## Feature inicial implementada
 
 Comando en chat de Twitch:
@@ -146,12 +186,23 @@ src/
   shared/             # Helpers reutilizables entre componentes
 ```
 
+## Documentacion
+
+- [Indice de Documentacion](docs/README.md)
+- [Arquitectura](docs/architecture.md)
+- [Core Subsystems](docs/core-subsystems.md)
+- [Subsistema de Cooldown](docs/cooldown-system.md)
+- [Sistema de Comandos Custom](docs/custom-commands-system.md)
+- [Sistema de Luz](docs/light-system.md)
+- [Sistema de Funa](docs/funa-system.md)
+- [Guia: Agregar Comandos](docs/development/add-command.md)
+- [Buenas Practicas](docs/development/best-practices.md)
+
 ## Documentacion de APIs
 
 - [Twitch](docs/apis/twitch.md)
 - [Philips Hue](docs/apis/hue.md)
 - [Discord](docs/apis/discord.md)
-- [Sistema de Funa](docs/funa-system.md)
 
 ## Nota
 
@@ -169,7 +220,7 @@ Contador de funas por usuario con persistencia SQLite. Detalles en [docs/funa-sy
 
 - **`!funa` (Twitch)** - EN PROGRESO
   - ✅ Sistema de persistencia SQLite con identidades canónicas.
-  - ✅ Cooldown por comando por canal.
+  - ✅ Cooldown por plataforma/comando con estrategia configurable.
   - ✅ Matching automático de nombres y búsqueda de similares.
   - ⏳ Integración con Discord (reutilizará mismos servicios).
   - ⏳ Comando de admin para unificar identidades manuales.
